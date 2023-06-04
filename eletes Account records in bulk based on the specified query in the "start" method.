@@ -1,0 +1,20 @@
+// This class creates a batch process named "DeleteAccountRecordsBatch" that deletes Account records in bulk based
+on the specified query in the "start" method.
+To initiate and run the batch process, you would need to configure and execute it in the Salesforce environment.
+
+public class DeleteAccountRecordsBatch implements Database.Batchable<sObject> {
+    public Database.QueryLocator start(Database.BatchableContext BC) {
+     //String query = '';
+        return Database.getQueryLocator([SELECT Id, Name FROM Account WHERE Name LIKE '%acc%' limit 10]);
+    }
+     
+    public void execute(Database.BatchableContext BC, List<Account> accList) {
+        // Account records deleted
+        delete accList; 
+    }   
+     
+    public void finish(Database.BatchableContext BC) {
+        // İşlem tamamlandığında yapılacak işlemler buraya eklenir
+        System.debug('Account records deleted successfully.');
+    }
+}
