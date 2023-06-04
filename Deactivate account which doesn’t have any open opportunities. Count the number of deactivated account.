@@ -1,0 +1,38 @@
+//Check all the account in the system. Deactivate account which doesn’t have any open opportunities.
+Count the number of deactivated account.
+public class DeactivateAccountsBatch implements Database.Batchable<sObject> {
+    public Database.QueryLocator start(Database.BatchableContext BC) {
+        // collect the batches of records or objects to be passed to execute
+         
+   String query = 'SELECT Id, Name FROM Account WHERE Id NOT IN (SELECT AccountId FROM Opportunity WHERE IsClosed = false) AND Id IN (SELECT AccountId FROM Opportunity)';
+        return Database.getQueryLocator(query);
+            
+    }
+     
+    public void execute(Database.BatchableContext BC, List<Account> accList) {
+        List<Account> accountToUpdate = new List<Account>();
+
+       if (!accList.isEmpty()) {
+
+        for (Account acc :accList){
+             acc.Active__c = 'No';
+            accountToUpdate.add(acc);
+        }   
+                try {
+            // Update the Account Record
+            update accountToUpdate;
+         
+        } catch(Exception e) {
+            System.debug('Hata varsa kontrol et'+e);
+        }
+            
+    }
+    }   
+     
+    public void finish(Database.BatchableContext BC) {
+       //List<deactivatedCount> = [SELECT COUNT(Id) FROM Account WHERE Active__c = 'No'];
+        //System.debug('Number of deactivated accounts: ' + deactivatedCount);
+    }
+        
+         
+    }
