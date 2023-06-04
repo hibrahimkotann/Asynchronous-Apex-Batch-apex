@@ -1,0 +1,51 @@
+// Calculate the total amount of revenue in closed won opportunities. Calculate the total amount and send an email with the total amount.
+// Acceptance Criteria
+•	Check the status of opportunities (isWon==true)
+•	Retrieve the amount field of the opportunities
+•	Calculate the total amount of all closed won opportunities
+•	Send an email which gives the total amount
+
+public class CalculateOpportunityRevenueBatch implements Database.Batchable<SObject> {
+    
+    Decimal totalRevenue =0;
+    
+    public Database.QueryLocator start(Database.BatchableContext bc) {
+        // Kapalı kazanılan fırsatları sorgulama
+        return Database.getQueryLocator([
+            SELECT Amount
+            FROM Opportunity
+            WHERE IsWon = true AND IsClosed = true
+        ]);
+    }
+    
+    public void execute(Database.BatchableContext bc, List<Opportunity> oppList) {
+        // Fırsatların toplam gelirini hesaplama
+        for (Opportunity opp : oppList) {
+           totalRevenue = totalRevenue + opp.Amount;
+
+        }
+    }
+    
+    public void finish(Database.BatchableContext bc) {
+        // E-posta gönderme işlemi
+        String emailSubject = 'Total Revenue of Closed Won Opportunities';
+        String emailBody = 'Total Revenue: ' + totalRevenue;
+        String recipientEmail = 'h.ibrahimkotann@gmail.com';
+        
+        Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
+        email.setSubject(emailSubject);
+        email.setPlainTextBody(emailBody);
+        email.setToAddresses(new List<String>{recipientEmail});
+        
+        Messaging.SendEmailResult[] sendResults = Messaging.sendEmail(new Messaging.SingleEmailMessage[]{email});
+        
+        // Gönderim sonuçlarını kontrol etme
+       for (Messaging.SendEmailResult result : sendResults) {
+            if (result.isSuccess()) {
+                System.debug('E-posta başarıyla gönderildi.');
+            } else {
+                System.debug('E-posta gönderimi başarısız oldu. Hata: ' + result.getErrors()[0].getMessage());
+            }
+        }
+    }
+}
