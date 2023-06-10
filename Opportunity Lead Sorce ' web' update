@@ -1,0 +1,32 @@
+// example of Batch apex..Opportunity Lead Sorce ' web' update 
+
+public class OppProcessor implements Database.Batchable<sObject>, Database.stateful {
+          public integer recordCount = 0;
+    public Database.QueryLocator start(Database.BatchableContext BC) {
+        // collect the batches of records or objects to be passed to execute
+       
+        return Database.getQueryLocator([SELECT Id, Name FROM Opportunity]);
+    }
+     
+    public void execute(Database.BatchableContext BC, List<Opportunity> oppList) {
+        
+        // process each batch of records default size is 200
+        for(Opportunity opp : oppList) {        
+            // Update the Account Name 
+            opp.LeadSource = 'Web';
+        }
+        try {
+            // Update the Account Record
+            update oppList;
+            recordCount = recordCount + oppList.size();
+         
+        } catch(Exception e) {
+            System.debug(e);
+        }
+         
+    }   
+         public void finish(Database.BatchableContext BC) {
+             System.debug('Total records Processed' + recordCount);
+        // execute any post-processing operations like sending email
+    }
+}
