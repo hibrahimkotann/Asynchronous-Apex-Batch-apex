@@ -1,0 +1,57 @@
+@IsTest
+private class OppBatchReminderTest {
+    @IsTest
+    static void testOppBatchReminder() {
+        // test data oluştur.
+        List<Opportunity> opportunities = new List<Opportunity>();
+        
+        // Create test Opportunity records with different CloseDates
+        for (Integer i = 0; i < 10; i++) {
+            Opportunity opp = new Opportunity(
+                Name = 'Test Opportunity ' + i,
+                StageName = 'Open',
+                CloseDate = Date.today().addDays(i + 3), //Kapanma tarihine 3 gün ekleniyor
+                OwnerId = UserInfo.getUserId()
+            );
+            opportunities.add(opp);
+        }
+        
+        insert opportunities;
+        
+        // batch job başlat
+        Test.startTest();
+        OppBatchReminder batch = new OppBatchReminder();
+        Database.executeBatch(batch);
+        Test.stopTest();
+        
+        // Verify the results
+        List<EmailMessage> sentEmails = [SELECT Id, ToAddress, Subject, HtmlBody FROM EmailMessage];
+        
+        // Count the number of expected emails based on the Opportunities with CloseDate within 3 days
+        Integer expectedEmailCount = 0;
+        for (Opportunity opp : opportunities) {
+            Date today = Date.today();
+            Date closeDateLimit = today.addDays(3);
+            
+            if (opp.IsClosed == false && opp.CloseDate <= closeDateLimit && opp.CloseDate >= today) {
+                expectedEmailCount++;
+            }
+        }
+        
+        // Assert that an email was sent for each Opportunity with CloseDate within 3 days
+        System.assertEquals(expectedEmailCount, sentEmails.size(), 'Email count is incorrect.');
+        
+        // Assert the email content
+        for (EmailMessage email : sentEmails) {
+            // Find the corresponding Opportunity based on the recipient's email address
+             Opportunity opp = [SELECT Id, Name, OwnerId, CloseDate, Owner.Email, Owner.Name FROM Opportunity WHERE Owner.Email = :email.ToAddress LIMIT 1];
+            
+            // Assert the subject and body
+            String expectedSubject = opp.Name + ' Opportunity required action!';
+            String expectedBody = 'Hello ' + opp.Owner.Name + ',\n\n' +
+                                  opp.Name + ' Opportunity has to be closed before ' + opp.CloseDate + '.\n' +
+                                  'Please finalize your sales process.';
+           
+        }
+    }
+}
