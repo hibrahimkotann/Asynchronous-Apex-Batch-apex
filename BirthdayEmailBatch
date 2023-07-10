@@ -1,0 +1,35 @@
+public class BirthdayEmailBatch implements Database.Batchable<sObject>{
+    public Database.QueryLocator start(Database.BatchableContext bc) {
+     
+        String query = 'SELECT Id, FirstName, LastName, Email, Birthdate FROM Contact WHERE Birthdate != null';
+
+          return Database.getQueryLocator(query);
+    }
+    
+    public void execute(Database.BatchableContext bc, List<Contact> CntList) {
+        List<Messaging.SingleEmailMessage> emails = new List<Messaging.SingleEmailMessage>();
+        
+        for (Contact contact :  CntList) {
+             if(contact.Birthdate.day() == system.today().day() && contact.Birthdate.month()==system.today().month()){
+            String subject = 'Happy Birthdate ' + contact.FirstName + ' ' + contact.LastName + '!';
+            String body = 'As Silverline family, we wish you a very happy birthday and send you best wishes for much happiness in your life!';
+            
+            Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
+            email.setToAddresses(new List<String>{ contact.Email });
+            email.setSubject(subject);
+            email.setPlainTextBody(body);
+            
+            emails.add(email);
+        }
+        }
+        
+        // E-postaları toplu olarak gönder
+        Messaging.sendEmail(emails);
+        
+      }
+    
+    
+         public void finish(Database.BatchableContext bc) {
+        
+    }
+}
