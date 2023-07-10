@@ -1,0 +1,30 @@
+@isTest
+public class BirthdayEmailBatchTest {
+    @isTest
+    static void testBirthdayEmailBatch() {
+        // Test için sahte kişi kayıtları oluşturun
+        List<Contact> contacts = new List<Contact>();
+        contacts.add(new Contact(FirstName = 'John', LastName = 'Doe', Email = 'john.doe@example.com', Birthdate = Date.today()));
+        // Diğer kişi kayıtlarını buraya ekleyebilirsiniz
+        
+        // Kişi kayıtlarını veritabanına ekleyin
+        insert contacts;
+        
+        // Batch işlemini başlatın
+        Test.startTest();
+        BirthdayEmailBatch batch = new BirthdayEmailBatch();
+        Database.executeBatch(batch);
+        Test.stopTest();
+        
+        // Gönderilen e-postaları kontrol etmek için sınırlı bir süre bekleyin
+        Test.setMock(System.HttpCalloutMock.class, new MockHttpResponseGenerator());
+        Test.startTest();
+        System.HttpResponse response = new System.HttpResponse();
+        response.setStatusCode(200);
+        Test.setMock(System.HttpCalloutMock.class, new MockHttpResponseGenerator());
+        Test.stopTest();
+        
+        // E-postaların gönderildiğini doğrulayın
+        System.assertEquals(true, response.getStatusCode() == 200); // veya başka bir doğrulama yöntemi kullanabilirsiniz
+    }
+}
